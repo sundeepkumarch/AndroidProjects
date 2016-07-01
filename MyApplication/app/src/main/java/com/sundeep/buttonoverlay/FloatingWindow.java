@@ -2,25 +2,26 @@ package com.sundeep.buttonoverlay;
 
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
-import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
-/**
- * Created by sundeep on 6/30/2016.
- */
 public class FloatingWindow extends Service {
 
-    Button mButton;
-    private WindowManager wm;
+    public static String TAG = "com.sundeep.buttonoverlay.FloatingWindow";
 
-    @Nullable
+    private WindowManager wm;
+    private LinearLayout ll;
+    private Button button;
+
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -30,57 +31,84 @@ public class FloatingWindow extends Service {
     public void onCreate() {
         super.onCreate();
 
-        mButton = new Button(this);
-        mButton.setText("Overlay button");
+        wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        ll = new LinearLayout(this);
 
+        button = new Button(this);
+        button.setText("Overlay button");
+
+        LinearLayout.LayoutParams llParameters = new LinearLayout.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
+        ll.setBackgroundColor(Color.BLUE);
+        ll.setLayoutParams(llParameters);
+        ll.setVisibility(View.INVISIBLE);
 
         final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
-                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-                PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.RIGHT | Gravity.TOP;
-        params.setTitle("Load Average");
-        wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        wm.addView(mButton, params);
+                                        WindowManager.LayoutParams.WRAP_CONTENT,
+                                        WindowManager.LayoutParams.WRAP_CONTENT,
+                                        WindowManager.LayoutParams.TYPE_PHONE,
+                                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                                        PixelFormat.TRANSLUCENT);
 
-        mButton.setOnTouchListener(new View.OnTouchListener() {
-            int x, y;
-            float touchedX,touchedY;
+        params.x = 0;
+        params.y = 0;
+        params.gravity = Gravity.CENTER ;
+
+        final WindowManager.LayoutParams llParams = new WindowManager.LayoutParams(
+                400,
+                400,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+        llParams.x = 0;
+        llParams.y = 100;
+        llParams.gravity = Gravity.TOP | Gravity.LEFT ;
+
+        wm.addView(button, params);
+        wm.addView(ll, llParams);
+        wm.updateViewLayout(ll,llParams);
+
+        button.setOnTouchListener(new View.OnTouchListener() {
+
             private WindowManager.LayoutParams updatedParams = params;
+            int x , y;
+            float touchedX, touchedY;
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                Toast.makeText(FloatingWindow.this,"Overlay button event", Toast.LENGTH_SHORT).show();
-
                 switch (event.getAction()){
                     case MotionEvent.ACTION_DOWN:
                         x = updatedParams.x;
                         y = updatedParams.y;
 
-                        touchedX = event.getX();
-                        touchedY = event.getY();
-
+                        touchedX = event.getRawX();
+                        touchedY = event.getRawY();
+                        Log.d(TAG,"ACTION_DOWN Touched X:"+touchedX+" Y:"+touchedY);
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        updatedParams.x = (int)(x + (event.getX()-touchedX));
-                        updatedParams.y = (int)(y + (event.getY()-touchedY));
-
-                        wm.updateViewLayout(mButton,updatedParams);
+                        updatedParams.x = (int)(x + (event.getRawX()-touchedX));
+                        updatedParams.y = (int)(y + (event.getRawY()-touchedY));
+                        Log.d(TAG,"ACTION_DOWN UpdatedParams X:"+updatedParams.x+" Y:"+updatedParams.y);
+                        wm.updateViewLayout(button,updatedParams);
                 }
                 return false;
             }
         });
-    }
 
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(FloatingWindow.this,"Overlay button Clicked", Toast.LENGTH_SHORT).show();
+                ll.setVisibility(View.VISIBLE);
+//                wm.removeViewImmediate(button);
+                wm.updateViewLayout(ll,llParams);
+
+            }
+        });
+    }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(mButton != null)
-        {
-            ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(mButton);
-            mButton = null;
-        }
+
     }
 }
+
