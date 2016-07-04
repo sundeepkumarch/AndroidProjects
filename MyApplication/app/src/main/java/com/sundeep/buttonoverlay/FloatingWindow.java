@@ -3,7 +3,6 @@ package com.sundeep.buttonoverlay;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -11,8 +10,6 @@ import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.RectF;
 import android.os.IBinder;
-import android.provider.MediaStore;
-import android.support.annotation.Nullable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -25,22 +22,20 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import java.io.FileOutputStream;
-
 public class FloatingWindow extends Service {
 
     public static String TAG = "com.sundeep.buttonoverlay.FloatingWindow";
 
     private WindowManager wm;
     private LinearLayout ll;
-    private Button button;
-    private ImageView imageView;
+    private Button stopButton;
+    private ImageView launchIcon;
+    private boolean llVisible = false;
 
     private int llWidth = 400;
     private int llHeight = 400;
 
     private SwipeView swipeView;
-    private ImageView closeBtn;
 
     private GestureDetector gestureDetector;
 
@@ -56,59 +51,47 @@ public class FloatingWindow extends Service {
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         ll = new LinearLayout(this);
 
-        button = new Button(this);
-        button.setText("Overlay button");
+        stopButton = new Button(this);
+        stopButton.setText("Stop");
 
-        imageView = new ImageView(this);
-        imageView.setImageResource(R.drawable.overlayicon_1);
+        launchIcon = new ImageView(this);
+        launchIcon.setImageResource(R.drawable.overlayicon_1);
 
         swipeView = new SwipeView(this);
-
-        closeBtn = new ImageView(this);
-        closeBtn.setImageResource(R.drawable.close);
 
         gestureDetector = new GestureDetector(this, new SingleTap());
 
         final LinearLayout.LayoutParams llParameters = new LinearLayout.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
-        ll.setBackgroundColor(Color.WHITE);
+        ll.setBackgroundColor(Color.TRANSPARENT);
         ll.setLayoutParams(llParameters);
-        ll.setVisibility(View.INVISIBLE);
+        ll.setVisibility(llVisible ? View.VISIBLE: View.INVISIBLE);
         ll.setBackgroundResource(R.drawable.custom_rectangle);
+
         ll.addView(swipeView, LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
 
-        LinearLayout.LayoutParams closebtnParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        closebtnParams.gravity = Gravity.TOP | Gravity.RIGHT;
-
-        ll.addView(closeBtn, closebtnParams);
-
-        final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+        final WindowManager.LayoutParams launchIconParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
-        params.x = 0;
-        params.y = 0;
-        params.gravity = Gravity.CENTER ;
+        launchIconParams.gravity = Gravity.CENTER ;
 
         final WindowManager.LayoutParams llParams = new WindowManager.LayoutParams(
-                llWidth,
-                llHeight,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
-        llParams.x = 0;
-        llParams.y = 100;
-        llParams.gravity = Gravity.TOP | Gravity.LEFT ;
 
-        wm.addView(imageView, params);
+        wm.addView(launchIcon, launchIconParams);
         wm.addView(ll, llParams);
         wm.updateViewLayout(ll,llParams);
 
-        imageView.setOnTouchListener(new View.OnTouchListener() {
+        launchIcon.setOnTouchListener(new View.OnTouchListener() {
 
-            private WindowManager.LayoutParams updatedParams = params;
+            private WindowManager.LayoutParams updatedParams = launchIconParams;
             int x , y;
             float touchedX, touchedY;
             @Override
@@ -117,17 +100,35 @@ public class FloatingWindow extends Service {
                 if (gestureDetector.onTouchEvent(event)) {
                     // Single Tap
                     Toast.makeText(FloatingWindow.this,"Overlay button Clicked", Toast.LENGTH_SHORT).show();
-                    ll.setVisibility(View.VISIBLE);
+                    swipeView.clear();
+                    llVisible = !llVisible;
+                    ll.setVisibility(llVisible ? View.VISIBLE: View.INVISIBLE);
 
                     DisplayMetrics displayMetrics = new DisplayMetrics();
                     wm.getDefaultDisplay().getMetrics(displayMetrics);
                     int height = displayMetrics.heightPixels;
                     int width = displayMetrics.widthPixels;
 
-                    llParams.x = (width/2) - (llWidth/2);
-                    llParams.y = (height/2) - (llHeight/2);
+                    llParams.height = 2*height/3;
+                    llParams.width = width;
 
+                    llParams.x = 0;
+                    llParams.y = height/3;
+
+                    if((int)event.getRawX() < width/2 ){
+                        launchIconParams.x = 0;
+                        launchIconParams.y =  10;// - (launchIcon.getHeight());
+                        launchIconParams.gravity = Gravity.START;
+                        Log.d(TAG,"Left-LaunchIcon X = "+launchIconParams.x+" Y = " + launchIconParams.y);
+                    }else{
+                        launchIconParams.x = width-(launchIcon.getWidth());
+                        launchIconParams.y =  10;// - (launchIcon.getHeight());
+                        launchIconParams.gravity = Gravity.END;
+                        Log.d(TAG,"Right-LaunchIcon X = "+launchIconParams.x+" Y = " + launchIconParams.y);
+                    }
+                    Log.d(TAG,"TAP Icon X:"+launchIconParams.x+" Y:"+launchIconParams.y);
                     wm.updateViewLayout(ll,llParams);
+                    wm.updateViewLayout(launchIcon,launchIconParams);
                     return true;
                 } else {
                     //Drag and Move
@@ -143,8 +144,10 @@ public class FloatingWindow extends Service {
                         case MotionEvent.ACTION_MOVE:
                             updatedParams.x = (int)(x + (event.getRawX()-touchedX));
                             updatedParams.y = (int)(y + (event.getRawY()-touchedY));
-                            Log.d(TAG,"ACTION_MOVE UpdatedParams X:"+updatedParams.x+" Y:"+updatedParams.y);
-                            wm.updateViewLayout(imageView,updatedParams);
+
+                            Log.d(TAG,"ACTION_MOVE UpdatedParams X:"+updatedParams.x+" Y:"+updatedParams.y+" X="+x+" Y="+y);
+
+                            wm.updateViewLayout(launchIcon,updatedParams);
                     }
                 }
 
