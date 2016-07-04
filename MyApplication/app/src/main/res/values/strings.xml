@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ButtonOverlay</string>
+    <string name="external_dir">GetSignature</string>
 </resources>

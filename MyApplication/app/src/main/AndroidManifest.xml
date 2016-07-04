@@ -18,6 +18,7 @@
             </intent-filter>
         </activity>
         <service android:name=".FloatingWindow"></service>
+        <activity android:name=".CaptureSwipeActivity"></activity>
     </application>
 
 </manifest>

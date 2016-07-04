@@ -9,6 +9,7 @@ import android.widget.Button;
 public class MainActivity extends AppCompatActivity {
 
     private Button button;
+    private Button capture;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,12 +18,23 @@ public class MainActivity extends AppCompatActivity {
 
         button = (Button) findViewById(R.id.start);
 
+        capture = (Button) findViewById(R.id.capture);
+
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, FloatingWindow.class);
                 startService(intent);
                 finish();
+            }
+        });
+
+        capture.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, CaptureSwipeActivity.class);
+                startActivity(intent);
             }
         });
     }
