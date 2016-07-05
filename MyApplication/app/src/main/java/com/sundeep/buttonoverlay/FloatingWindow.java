@@ -115,20 +115,13 @@ public class FloatingWindow extends Service {
                     llParams.x = 0;
                     llParams.y = height/3;
 
-                    if((int)event.getRawX() < width/2 ){
-                        launchIconParams.x = 0;
-                        launchIconParams.y =  10;// - (launchIcon.getHeight());
-                        launchIconParams.gravity = Gravity.START;
-                        Log.d(TAG,"Left-LaunchIcon X = "+launchIconParams.x+" Y = " + launchIconParams.y);
-                    }else{
-                        launchIconParams.x = width-(launchIcon.getWidth());
-                        launchIconParams.y =  10;// - (launchIcon.getHeight());
-                        launchIconParams.gravity = Gravity.END;
-                        Log.d(TAG,"Right-LaunchIcon X = "+launchIconParams.x+" Y = " + launchIconParams.y);
-                    }
-                    Log.d(TAG,"TAP Icon X:"+launchIconParams.x+" Y:"+launchIconParams.y);
-                    wm.updateViewLayout(ll,llParams);
+                    launchIconParams.x = (width/2)-(launchIcon.getWidth()/4);
+                    launchIconParams.y =  (-1*(height/6))-(3*launchIcon.getHeight()/4);
+
                     wm.updateViewLayout(launchIcon,launchIconParams);
+
+                    wm.updateViewLayout(ll,llParams);
+
                     return true;
                 } else {
                     //Drag and Move
