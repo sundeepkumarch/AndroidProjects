@@ -6,10 +6,13 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import com.sundeep.buttonoverlay.gesture.GestureListActivity;
+
 public class MainActivity extends AppCompatActivity {
 
     private Button button;
     private Button capture;
+    private Button gesture;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,6 +22,8 @@ public class MainActivity extends AppCompatActivity {
         button = (Button) findViewById(R.id.start);
 
         capture = (Button) findViewById(R.id.capture);
+
+        gesture = (Button) findViewById(R.id.gesture);
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -34,6 +39,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, CaptureSwipeActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        gesture.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, GestureListActivity.class);
                 startActivity(intent);
             }
         });
