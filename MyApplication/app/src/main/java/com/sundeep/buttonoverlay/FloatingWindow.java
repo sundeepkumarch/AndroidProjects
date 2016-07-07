@@ -3,12 +3,18 @@ package com.sundeep.buttonoverlay;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.gesture.Gesture;
+import android.gesture.GestureLibraries;
+import android.gesture.GestureLibrary;
+import android.gesture.GestureOverlayView;
+import android.gesture.Prediction;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.RectF;
+import android.net.Uri;
 import android.os.IBinder;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -16,11 +22,14 @@ import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import java.util.ArrayList;
 
 public class FloatingWindow extends Service {
 
@@ -28,16 +37,14 @@ public class FloatingWindow extends Service {
 
     private WindowManager wm;
     private LinearLayout ll;
-    private Button stopButton;
     private ImageView launchIcon;
     private boolean llVisible = false;
 
     private int llWidth = 400;
     private int llHeight = 400;
 
-    private SwipeView swipeView;
-
     private GestureDetector gestureDetector;
+    private GestureLibrary gLib;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -51,23 +58,10 @@ public class FloatingWindow extends Service {
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         ll = new LinearLayout(this);
 
-        stopButton = new Button(this);
-        stopButton.setText("Stop");
-
         launchIcon = new ImageView(this);
         launchIcon.setImageResource(R.drawable.overlayicon_1);
 
-        swipeView = new SwipeView(this);
-
         gestureDetector = new GestureDetector(this, new SingleTap());
-
-        final LinearLayout.LayoutParams llParameters = new LinearLayout.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
-        ll.setBackgroundColor(Color.TRANSPARENT);
-        ll.setLayoutParams(llParameters);
-        ll.setVisibility(llVisible ? View.VISIBLE: View.INVISIBLE);
-        ll.setBackgroundResource(R.drawable.custom_rectangle);
-
-        ll.addView(swipeView, LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
 
         final WindowManager.LayoutParams launchIconParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -78,12 +72,32 @@ public class FloatingWindow extends Service {
 
         launchIconParams.gravity = Gravity.CENTER ;
 
+        final LinearLayout.LayoutParams llParameters = new LinearLayout.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
+        ll.setBackgroundColor(Color.TRANSPARENT);
+        ll.setLayoutParams(llParameters);
+        ll.setVisibility(llVisible ? View.VISIBLE: View.INVISIBLE);
+        ll.setBackgroundResource(R.drawable.custom_rectangle);
+
         final WindowManager.LayoutParams llParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
+
+        gLib = GestureLibraries.fromFile(getExternalFilesDir(null) + "/" + "gesture.txt");
+        gLib.load();
+
+        GestureOverlayView gestureOverlayView = new GestureOverlayView(this);
+        gestureOverlayView.setFadeOffset(1000);
+        gestureOverlayView.setFadeEnabled(true);
+        gestureOverlayView.setGestureStrokeType(GestureOverlayView.GESTURE_STROKE_TYPE_MULTIPLE);
+        gestureOverlayView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+
+        gestureOverlayView.addOnGesturePerformedListener(handleGestureListener);
+        gestureOverlayView.setGestureStrokeAngleThreshold(90.0f);
+
+        ll.addView(gestureOverlayView);
 
         wm.addView(launchIcon, launchIconParams);
         wm.addView(ll, llParams);
@@ -100,7 +114,7 @@ public class FloatingWindow extends Service {
                 if (gestureDetector.onTouchEvent(event)) {
                     // Single Tap
                     Toast.makeText(FloatingWindow.this,"Overlay button Clicked", Toast.LENGTH_SHORT).show();
-                    swipeView.clear();
+//                    swipeView.clear();
                     llVisible = !llVisible;
                     ll.setVisibility(llVisible ? View.VISIBLE: View.INVISIBLE);
 
@@ -149,10 +163,34 @@ public class FloatingWindow extends Service {
         });
     }
 
+    private GestureOverlayView.OnGesturePerformedListener handleGestureListener = new GestureOverlayView.OnGesturePerformedListener() {
+        @Override
+        public void onGesturePerformed(GestureOverlayView gestureView,Gesture gesture) {
+
+            ArrayList<Prediction> predictions = gLib.recognize(gesture);
+            Log.d(TAG, "Recognized");
+
+            // one prediction needed
+            if (predictions.size() > 0) {
+                Prediction prediction = predictions.get(0);
+                // checking prediction
+                if (prediction.score > 1.0) {
+                    // and action
+                    Toast.makeText(FloatingWindow.this, prediction.name, Toast.LENGTH_SHORT).show();
+                    if(prediction.name.equalsIgnoreCase("save")){
+                        Intent callIntent = new Intent(Intent.ACTION_CALL);
+                        callIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        callIntent.setData(Uri.parse("tel:+919743960300"));
+                        startActivity(callIntent);
+                    }
+                }
+            }
+        }
+    };
+
     @Override
     public void onDestroy() {
         super.onDestroy();
-
     }
 
     private class SingleTap implements GestureDetector.OnGestureListener {
@@ -186,100 +224,6 @@ public class FloatingWindow extends Service {
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             return false;
-        }
-    }
-
-    public class SwipeView extends View {
-
-        private static final float STROKE_WIDTH = 5f;
-        private static final float HALF_STROKE_WIDTH = STROKE_WIDTH / 2;
-        private Paint paint = new Paint();
-        private Path path = new Path();
-
-        private float lastTouchX;
-        private float lastTouchY;
-        private final RectF dirtyRect = new RectF();
-
-        public SwipeView(Context context) {
-            super(context);
-            paint.setAntiAlias(true);
-            paint.setColor(Color.BLACK);
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeJoin(Paint.Join.ROUND);
-            paint.setStrokeWidth(STROKE_WIDTH);
-        }
-
-        public void clear(){
-            path.reset();
-            invalidate();
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            canvas.drawPath(path,paint);
-        }
-
-        @Override
-        public boolean onTouchEvent(MotionEvent event) {
-            float eventX = event.getX();
-            float eventY = event.getY();
-
-            switch (event.getAction()){
-                case MotionEvent.ACTION_DOWN:
-                    path.moveTo(eventX,eventY);
-                    lastTouchX = eventX;
-                    lastTouchY = eventY;
-                    return true;
-                case MotionEvent.ACTION_MOVE:
-
-                case MotionEvent.ACTION_UP:
-                    resetDirtyRect(eventX, eventY);
-                    int historySize = event.getHistorySize();
-                    for (int i = 0; i < historySize; i++)
-                    {
-                        float historicalX = event.getHistoricalX(i);
-                        float historicalY = event.getHistoricalY(i);
-                        expandDirtyRect(historicalX, historicalY);
-                        path.lineTo(historicalX, historicalY);
-                    }
-                    path.lineTo(eventX, eventY);
-                    break;
-                default:
-                    Log.d("CaptureSwipeActivity","Ignored touch event: " + event.toString());
-                    return false;
-            }
-
-            invalidate((int) (dirtyRect.left - HALF_STROKE_WIDTH),
-                    (int) (dirtyRect.top - HALF_STROKE_WIDTH),
-                    (int) (dirtyRect.right + HALF_STROKE_WIDTH),
-                    (int) (dirtyRect.bottom + HALF_STROKE_WIDTH));
-
-            lastTouchX = eventX;
-            lastTouchY = eventY;
-
-            return true;
-        }
-
-        private void expandDirtyRect(float historicalX, float historicalY) {
-            if (historicalX < dirtyRect.left){
-                dirtyRect.left = historicalX;
-            } else if (historicalX > dirtyRect.right) {
-                dirtyRect.right = historicalX;
-            }
-
-            if (historicalY < dirtyRect.top) {
-                dirtyRect.top = historicalY;
-            } else if (historicalY > dirtyRect.bottom) {
-                dirtyRect.bottom = historicalY;
-            }
-        }
-
-        private void resetDirtyRect(float eventX, float eventY)
-        {
-            dirtyRect.left = Math.min(lastTouchX, eventX);
-            dirtyRect.right = Math.max(lastTouchX, eventX);
-            dirtyRect.top = Math.min(lastTouchY, eventY);
-            dirtyRect.bottom = Math.max(lastTouchY, eventY);
         }
     }
 }
