@@ -13,5 +13,7 @@
     <string name="invalid_name">Enter valida name</string>
     <string name="no_gesture">Please draw gesture first!</string>
     <string name="gesture_saved">saved succesfully to:</string>
+    <string name="gesture_name">Gesture Name</string>
+    <string name="gesture_action">Gesture Action</string>
 
 </resources>
