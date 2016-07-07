@@ -9,6 +9,7 @@ import android.gesture.GestureLibrary;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
@@ -18,6 +19,7 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.sundeep.buttonoverlay.FloatingWindow;
 import com.sundeep.buttonoverlay.R;
 
 import java.util.ArrayList;
@@ -100,10 +102,6 @@ public class GestureListActivity extends AppCompatActivity {
         startActivity(saveGesture);
     }
 
-    public void testButtonClick(View view) {
-        Intent testGesture = new Intent(GestureListActivity.this, GestureActivity.class);
-        startActivity(testGesture);
-    }
 
     public void deleteButtonClick(MenuItem item){
         gLib.removeEntry(mCurrentGestureName);
@@ -157,5 +155,24 @@ public class GestureListActivity extends AppCompatActivity {
         }
         newName = "";
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.play_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.play:
+                Intent intent = new Intent(GestureListActivity.this, FloatingWindow.class);
+                startService(intent);
+                item.setIcon(R.drawable.ic_pause);
+//                finish();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
