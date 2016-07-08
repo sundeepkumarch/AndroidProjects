@@ -47,7 +47,8 @@
             android:layout_weight="1"
             android:gravity="center|start"
             android:hint="@string/gesture_action"
-            android:padding="10dp" />
+            android:padding="10dp"
+            android:onClick="onNewAction"/>
     </android.support.v7.widget.CardView>
 
     <android.support.v7.widget.CardView

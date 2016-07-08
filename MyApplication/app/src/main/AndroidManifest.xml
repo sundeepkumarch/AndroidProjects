@@ -3,7 +3,7 @@
     package="com.sundeep.buttonoverlay">
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.CALL_PHONE" />
 
     <application
         android:allowBackup="true"
@@ -19,11 +19,10 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".FloatingWindow" />
+        <service android:name=".gesture.FloatingWindow" />
 
-        <activity android:name=".CaptureSwipeActivity" />
-        <activity android:name=".gesture.SaveGestureActivity" />
-        <activity android:name=".gesture.GestureActivity"/>
+        <activity android:name=".gesture.GestureSaveActivity" />
+        <activity android:name=".gesture.ActionsListActivity"></activity>
     </application>
 
 </manifest>

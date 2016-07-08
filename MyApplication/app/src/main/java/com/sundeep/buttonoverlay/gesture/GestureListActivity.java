@@ -6,20 +6,19 @@ import android.content.Intent;
 import android.gesture.Gesture;
 import android.gesture.GestureLibraries;
 import android.gesture.GestureLibrary;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.PopupMenu;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.sundeep.buttonoverlay.FloatingWindow;
 import com.sundeep.buttonoverlay.R;
 
 import java.util.ArrayList;
@@ -29,11 +28,12 @@ public class GestureListActivity extends AppCompatActivity {
 
     private static final String TAG = "GestureListActivity";
     private String mCurrentGestureName;
-    private ListView mGestureListView;
     private ArrayList<GestureHolder> mGestureList;
-    private GestureAdapter mGestureAdapter;
     private GestureLibrary gLib;
     private String newName;
+
+    private RecyclerView gestureRecyclerView;
+    private GridLayoutManager gridLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,44 +42,44 @@ public class GestureListActivity extends AppCompatActivity {
 
         openOptionsMenu();
 
-        mGestureListView = (ListView) findViewById(R.id.gestures_list);
-        mGestureList = new ArrayList<>();
-        prepareList();
-        mGestureAdapter = new GestureAdapter(mGestureList, GestureListActivity.this);
-        mGestureListView.setLongClickable(true);
-        mGestureListView.setAdapter(mGestureAdapter);
-
-        // displays the popup context top_menu to either delete or resend measurement
-        registerForContextMenu(mGestureListView);
+        init();
     }
+
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
-        Log.d(TAG,"onResume");
+        Log.d(TAG, "onResume");
         setContentView(R.layout.activity_gesture_list);
 
         openOptionsMenu();
 
-        mGestureListView = (ListView) findViewById(R.id.gestures_list);
-        mGestureList = new ArrayList<>();
+        init();
+    }
+
+    public void init(){
         prepareList();
-        mGestureAdapter = new GestureAdapter(mGestureList, GestureListActivity.this);
-        mGestureListView.setLongClickable(true);
-        mGestureListView.setAdapter(mGestureAdapter);
+
+        gridLayoutManager = new GridLayoutManager(GestureListActivity.this, 2);
+        gestureRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        gestureRecyclerView.setHasFixedSize(true);
+        gestureRecyclerView.setLayoutManager(gridLayoutManager);
+
+        GestureListAdapter rcAdapter = new GestureListAdapter(mGestureList, GestureListActivity.this);
+        gestureRecyclerView.setAdapter(rcAdapter);
 
         // displays the popup context top_menu to either delete or resend measurement
-        registerForContextMenu(mGestureListView);
+        registerForContextMenu(gestureRecyclerView);
     }
 
     private void prepareList() {
         try {
-            mGestureList = new ArrayList<GestureHolder>();
+            mGestureList = new ArrayList<>();
             gLib = GestureLibraries.fromFile(getExternalFilesDir(null) + "/" + "gesture.txt");
             gLib.load();
             Set<String> gestureSet = gLib.getGestureEntries();
-            for(String gestureName: gestureSet){
+            for (String gestureName : gestureSet) {
                 ArrayList<Gesture> list = gLib.getGestures(gestureName);
-                for(Gesture g : list) {
+                for (Gesture g : list) {
                     mGestureList.add(new GestureHolder(g, gestureName));
                 }
             }
@@ -88,9 +88,9 @@ public class GestureListActivity extends AppCompatActivity {
         }
     }
 
-    public void populateMenu(View view){
-        LinearLayout vwParentRow = (LinearLayout)view.getParent().getParent();
-        TextView tv = (TextView)vwParentRow.findViewById(R.id.gestureNameRef);
+    public void populateMenu(View view) {
+        RelativeLayout vwParentRow = (RelativeLayout) view.getParent().getParent();
+        TextView tv = (TextView) vwParentRow.findViewById(R.id.gesture_name_ref);
         mCurrentGestureName = tv.getText().toString();
         PopupMenu popup = new PopupMenu(this, view);
         popup.getMenuInflater().inflate(R.menu.gesture_item_options, popup.getMenu());
@@ -98,19 +98,19 @@ public class GestureListActivity extends AppCompatActivity {
     }
 
     public void addButtonClick(View view) {
-        Intent saveGesture = new Intent(GestureListActivity.this, SaveGestureActivity.class);
+        Intent saveGesture = new Intent(GestureListActivity.this, GestureSaveActivity.class);
         startActivity(saveGesture);
     }
 
 
-    public void deleteButtonClick(MenuItem item){
+    public void deleteButtonClick(MenuItem item) {
         gLib.removeEntry(mCurrentGestureName);
         gLib.save();
         mCurrentGestureName = "";
         onResume();
     }
 
-    public void renameButtonClick(MenuItem item){
+    public void renameButtonClick(MenuItem item) {
 
         AlertDialog.Builder namePopup = new AlertDialog.Builder(this);
         namePopup.setTitle(getString(R.string.enterNewName));
@@ -136,7 +136,6 @@ public class GestureListActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 newName = "";
                 mCurrentGestureName = "";
-                return;
             }
         });
 
@@ -173,6 +172,6 @@ public class GestureListActivity extends AppCompatActivity {
 //                finish();
                 break;
         }
-        return super.onOptionsItemSelected(item);
+        return true;
     }
 }

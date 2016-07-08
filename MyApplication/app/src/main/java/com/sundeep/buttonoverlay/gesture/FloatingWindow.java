@@ -1,19 +1,14 @@
-package com.sundeep.buttonoverlay;
+package com.sundeep.buttonoverlay.gesture;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.gesture.Gesture;
 import android.gesture.GestureLibraries;
 import android.gesture.GestureLibrary;
 import android.gesture.GestureOverlayView;
 import android.gesture.Prediction;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.PixelFormat;
-import android.graphics.RectF;
 import android.net.Uri;
 import android.os.IBinder;
 import android.util.DisplayMetrics;
@@ -22,18 +17,18 @@ import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import com.sundeep.buttonoverlay.R;
 
 import java.util.ArrayList;
 
 public class FloatingWindow extends Service {
 
-    public static String TAG = "com.sundeep.buttonoverlay.FloatingWindow";
+    public static String TAG = "com.sundeep.buttonoverlay.gesture.FloatingWindow";
 
     private WindowManager wm;
     private LinearLayout ll;

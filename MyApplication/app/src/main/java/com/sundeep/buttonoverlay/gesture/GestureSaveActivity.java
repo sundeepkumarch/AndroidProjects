@@ -2,34 +2,43 @@ package com.sundeep.buttonoverlay.gesture;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.gesture.Gesture;
 import android.gesture.GestureLibraries;
 import android.gesture.GestureLibrary;
 import android.gesture.GestureOverlayView;
+import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.sundeep.buttonoverlay.R;
 
-public class SaveGestureActivity extends AppCompatActivity {
+public class GestureSaveActivity extends AppCompatActivity {
 
     private GestureLibrary gLib;
-    private static final String TAG = "SaveGestureActivity";
+    private static final String TAG = "GestureSaveActivity";
     private boolean mGestureDrawn;
     private Gesture mCurrentGesture;
     private String mGesturename;
+
+    private TextView gestureActionView;
+    private TextView gestureNameView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_save_gesture);
+
+        gestureNameView = (TextView) findViewById(R.id.newGestureName);
+        gestureActionView = (TextView) findViewById(R.id.newGestureAction);
 
         Log.d(TAG, "path = " + Environment.getExternalStorageDirectory().getAbsolutePath());
 
@@ -42,6 +51,11 @@ public class SaveGestureActivity extends AppCompatActivity {
         gestures.addOnGestureListener(mGestureListener);
 
         resetEverything();
+    }
+
+    public void onNewAction(View view) {
+        Intent intent = new Intent(GestureSaveActivity.this, ActionsListActivity.class);
+        startActivity(intent);
     }
 
     private GestureOverlayView.OnGestureListener mGestureListener = new GestureOverlayView.OnGestureListener() {
@@ -81,9 +95,9 @@ public class SaveGestureActivity extends AppCompatActivity {
                 break;
 
             case R.id.Save:
-                if(mGestureDrawn){
+                if (mGestureDrawn) {
                     getName();
-                } else{
+                } else {
                     showToast(getString(R.string.no_gesture));
                 }
 
@@ -143,7 +157,7 @@ public class SaveGestureActivity extends AppCompatActivity {
 
     }
 
-    private void showToast(String string){
+    private void showToast(String string) {
         Toast.makeText(this, string, Toast.LENGTH_SHORT).show();
     }
 
@@ -157,13 +171,14 @@ public class SaveGestureActivity extends AppCompatActivity {
         gLib.addGesture(mGesturename, mCurrentGesture);
         if (!gLib.save()) {
             Log.e(TAG, "gesture not saved!");
-        }else {
+        } else {
             showToast(getString(R.string.gesture_saved) + getExternalFilesDir(null) + "/gesture.txt");
         }
         reDrawGestureView();
         // }
     }
-    private void resetEverything(){
+
+    private void resetEverything() {
         mGestureDrawn = false;
         mCurrentGesture = null;
         mGesturename = "";
