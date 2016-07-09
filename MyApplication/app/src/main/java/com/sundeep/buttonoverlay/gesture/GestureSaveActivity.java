@@ -31,6 +31,10 @@ public class GestureSaveActivity extends AppCompatActivity {
 
     private TextView gestureActionView;
     private TextView gestureNameView;
+    private TextView cancelButton;
+    private TextView saveButton;
+
+    private static int ACTION_RESULT_CODE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +43,8 @@ public class GestureSaveActivity extends AppCompatActivity {
 
         gestureNameView = (TextView) findViewById(R.id.newGestureName);
         gestureActionView = (TextView) findViewById(R.id.newGestureAction);
+        cancelButton = (TextView) findViewById(R.id.cancelBtn);
+        saveButton = (TextView)findViewById(R.id.saveBtn);
 
         Log.d(TAG, "path = " + Environment.getExternalStorageDirectory().getAbsolutePath());
 
@@ -53,9 +59,33 @@ public class GestureSaveActivity extends AppCompatActivity {
         resetEverything();
     }
 
+    public void onSave(View view){
+        if (mGestureDrawn) {
+            if (!gestureNameView.getText().toString().matches("")) {
+                mGesturename = gestureNameView.getText().toString();
+                saveGesture();
+                finish();
+            } else {
+                getName();  //TODO : set name field with old name string user added
+                showToast(getString(R.string.invalid_name));
+            }
+        }
+    }
+
+    public void onCancel(View view){
+        reDrawGestureView();
+    }
+
     public void onNewAction(View view) {
         Intent intent = new Intent(GestureSaveActivity.this, ActionsListActivity.class);
-        startActivity(intent);
+        startActivityForResult(intent, ACTION_RESULT_CODE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == ACTION_RESULT_CODE && resultCode == RESULT_OK) {
+            gestureActionView.setText(data.getStringExtra("action"));
+        }
     }
 
     private GestureOverlayView.OnGestureListener mGestureListener = new GestureOverlayView.OnGestureListener() {
