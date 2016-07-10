@@ -10,10 +10,11 @@
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="enterName">Enter name:</string>
-    <string name="invalid_name">Enter valida name</string>
+    <string name="invalid_name">Enter valid name</string>
     <string name="no_gesture">Please draw gesture first!</string>
     <string name="gesture_saved">saved succesfully to:</string>
     <string name="gesture_name">Gesture Name</string>
     <string name="gesture_action">Gesture Action</string>
+    <string name="preference_file_key">com.sundeep.myapp.PREFERENCE_FILE_KEY</string>
 
 </resources>

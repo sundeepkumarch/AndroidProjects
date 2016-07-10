@@ -1,7 +1,9 @@
 package com.sundeep.buttonoverlay.gesture;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.gesture.Gesture;
 import android.gesture.GestureLibraries;
 import android.gesture.GestureLibrary;
@@ -11,6 +13,7 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.os.IBinder;
+import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -34,9 +37,6 @@ public class FloatingWindow extends Service {
     private LinearLayout ll;
     private ImageView launchIcon;
     private boolean llVisible = false;
-
-    private int llWidth = 400;
-    private int llHeight = 400;
 
     private GestureDetector gestureDetector;
     private GestureLibrary gLib;
@@ -65,12 +65,12 @@ public class FloatingWindow extends Service {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
-        launchIconParams.gravity = Gravity.CENTER ;
+        launchIconParams.gravity = Gravity.CENTER;
 
         final LinearLayout.LayoutParams llParameters = new LinearLayout.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
         ll.setBackgroundColor(Color.TRANSPARENT);
         ll.setLayoutParams(llParameters);
-        ll.setVisibility(llVisible ? View.VISIBLE: View.INVISIBLE);
+        ll.setVisibility(llVisible ? View.VISIBLE : View.INVISIBLE);
         ll.setBackgroundResource(R.drawable.custom_rectangle);
 
         final WindowManager.LayoutParams llParams = new WindowManager.LayoutParams(
@@ -96,60 +96,61 @@ public class FloatingWindow extends Service {
 
         wm.addView(launchIcon, launchIconParams);
         wm.addView(ll, llParams);
-        wm.updateViewLayout(ll,llParams);
+        wm.updateViewLayout(ll, llParams);
 
         launchIcon.setOnTouchListener(new View.OnTouchListener() {
 
             private WindowManager.LayoutParams updatedParams = launchIconParams;
-            int x , y;
+            int x, y;
             float touchedX, touchedY;
+
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
                 if (gestureDetector.onTouchEvent(event)) {
                     // Single Tap
-                    Toast.makeText(FloatingWindow.this,"Overlay button Clicked", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(FloatingWindow.this, "Overlay button Clicked", Toast.LENGTH_SHORT).show();
 //                    swipeView.clear();
                     llVisible = !llVisible;
-                    ll.setVisibility(llVisible ? View.VISIBLE: View.INVISIBLE);
+                    ll.setVisibility(llVisible ? View.VISIBLE : View.INVISIBLE);
 
                     DisplayMetrics displayMetrics = new DisplayMetrics();
                     wm.getDefaultDisplay().getMetrics(displayMetrics);
                     int height = displayMetrics.heightPixels;
                     int width = displayMetrics.widthPixels;
 
-                    llParams.height = 2*height/3;
+                    llParams.height = 2 * height / 3;
                     llParams.width = width;
 
                     llParams.x = 0;
-                    llParams.y = height/3;
+                    llParams.y = height / 3;
 
-                    launchIconParams.x = (width/2)-(launchIcon.getWidth()/4);
-                    launchIconParams.y =  (-1*(height/6))-(3*launchIcon.getHeight()/4);
+                    launchIconParams.x = (width / 2) - (launchIcon.getWidth() / 4);
+                    launchIconParams.y = (-1 * (height / 6)) - (3 * launchIcon.getHeight() / 4);
 
-                    wm.updateViewLayout(launchIcon,launchIconParams);
+                    wm.updateViewLayout(launchIcon, launchIconParams);
 
-                    wm.updateViewLayout(ll,llParams);
+                    wm.updateViewLayout(ll, llParams);
 
                     return true;
                 } else {
                     //Drag and Move
-                    switch (event.getAction()){
+                    switch (event.getAction()) {
                         case MotionEvent.ACTION_DOWN:
                             x = updatedParams.x;
                             y = updatedParams.y;
 
                             touchedX = event.getRawX();
                             touchedY = event.getRawY();
-                            Log.d(TAG,"ACTION_DOWN Touched X:"+touchedX+" Y:"+touchedY);
+                            Log.d(TAG, "ACTION_DOWN Touched X:" + touchedX + " Y:" + touchedY);
                             break;
                         case MotionEvent.ACTION_MOVE:
-                            updatedParams.x = (int)(x + (event.getRawX()-touchedX));
-                            updatedParams.y = (int)(y + (event.getRawY()-touchedY));
+                            updatedParams.x = (int) (x + (event.getRawX() - touchedX));
+                            updatedParams.y = (int) (y + (event.getRawY() - touchedY));
 
-                            Log.d(TAG,"ACTION_MOVE UpdatedParams X:"+updatedParams.x+" Y:"+updatedParams.y+" X="+x+" Y="+y);
+                            Log.d(TAG, "ACTION_MOVE UpdatedParams X:" + updatedParams.x + " Y:" + updatedParams.y + " X=" + x + " Y=" + y);
 
-                            wm.updateViewLayout(launchIcon,updatedParams);
+                            wm.updateViewLayout(launchIcon, updatedParams);
                     }
                 }
 
@@ -160,8 +161,8 @@ public class FloatingWindow extends Service {
 
     private GestureOverlayView.OnGesturePerformedListener handleGestureListener = new GestureOverlayView.OnGesturePerformedListener() {
         @Override
-        public void onGesturePerformed(GestureOverlayView gestureView,Gesture gesture) {
-
+        public void onGesturePerformed(GestureOverlayView gestureView, Gesture gesture) {
+            gLib.load();
             ArrayList<Prediction> predictions = gLib.recognize(gesture);
             Log.d(TAG, "Recognized");
 
@@ -171,12 +172,41 @@ public class FloatingWindow extends Service {
                 // checking prediction
                 if (prediction.score > 1.0) {
                     // and action
-                    Toast.makeText(FloatingWindow.this, prediction.name, Toast.LENGTH_SHORT).show();
-                    if(prediction.name.equalsIgnoreCase("save")){
-                        Intent callIntent = new Intent(Intent.ACTION_CALL);
-                        callIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        callIntent.setData(Uri.parse("tel:+919743960300"));
-                        startActivity(callIntent);
+                    Toast.makeText(FloatingWindow.this, prediction.name+":"+Utility.gestureMap.size(), Toast.LENGTH_SHORT).show();
+                    Intent intent = new Utility(getApplicationContext()).getGesture(prediction.name);
+
+                    if (intent != null) {
+                        Toast.makeText(FloatingWindow.this, "Starting intent:"+prediction.name, Toast.LENGTH_SHORT).show();
+                        Log.d("FloatingWindow","Action:"+intent.getAction());
+                        Log.d("FloatingWindow","Data_URI:"+intent.getData());
+                        Log.d("FloatingWindow","Flag:"+intent.getFlags());
+
+                        /*
+                        Intent callIntent = new Intent(Intent.ACTION_SEND);
+                        callIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        callIntent.setData(Uri.parse("content://com.android.contacts/data/"));
+                        callIntent.setType("text/plain");
+                        callIntent.setPackage("com.whatsapp");
+                        callIntent.putExtra(Intent.EXTRA_SUBJECT, "Subject");
+                        callIntent.putExtra(Intent.EXTRA_TEXT, "I'm the body.");
+
+                        TelephonyManager tm = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
+                        if(tm != null && tm.getSimState()==TelephonyManager.SIM_STATE_READY){
+                            startActivity(callIntent);
+                        }else{
+                            Log.d("FloatingWindow","No telephony available");
+                        }
+                        */
+                        Intent sendIntent = new Intent();
+                        sendIntent.setAction(Intent.ACTION_SENDTO);
+                        sendIntent.putExtra(Intent.EXTRA_TEXT, "This is my text to send.");
+                        sendIntent.setType("text/plain");
+                        sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        sendIntent.setPackage("com.whatsapp");
+                        sendIntent.setData(Uri.parse("smsto:+919686643995"));
+                        startActivity(sendIntent);
+
+
                     }
                 }
             }
@@ -191,7 +221,7 @@ public class FloatingWindow extends Service {
     private class SingleTap implements GestureDetector.OnGestureListener {
         @Override
         public boolean onDown(MotionEvent e) {
-            Log.d(TAG,"Gesture: onDown");
+            Log.d(TAG, "Gesture: onDown");
             return false;
         }
 
@@ -202,7 +232,7 @@ public class FloatingWindow extends Service {
 
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
-            Log.d(TAG,"Gesture: onSingleTapUp");
+            Log.d(TAG, "Gesture: onSingleTapUp");
             return true;
         }
 

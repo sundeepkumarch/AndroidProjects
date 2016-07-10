@@ -1,56 +1,66 @@
 package com.sundeep.buttonoverlay.gesture;
 
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.sundeep.buttonoverlay.R;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class ActionsListAdapter extends RecyclerView.Adapter<ActionsListAdapter.ActionsHolder>{
+public class ActionsListAdapter extends ArrayAdapter<ActionModel> {
 
     private List<ActionModel> mActionsList;
     private Context mContext;
+    private static LayoutInflater inflater = null;
+    private ActionsHolder actionsHolder;
 
-    public ActionsListAdapter(Context context, ArrayList<ActionModel> actionsList) {
-        this.mContext = context;
-        this.mActionsList = actionsList;
+    public ActionsListAdapter(Context context, int resource, List<ActionModel> mActionsList) {
+        super(context, resource, mActionsList);
+        this.mActionsList = mActionsList;
+        try {
+            this.mContext = context;
+            inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public ActionsHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View layoutView = LayoutInflater.from(parent.getContext()).inflate(R.layout.action_item, null);
-        ActionsHolder holder = new ActionsHolder(layoutView);
-        return holder;
-    }
+    public View getView(int position, View convertView, ViewGroup parent) {
+        if (convertView == null) {
+            convertView = inflater.inflate(R.layout.action_item, parent, false);
+            if (actionsHolder == null) {
+                actionsHolder = new ActionsHolder();
+            }
+            actionsHolder.actionIcon = (ImageView) convertView.findViewById(R.id.action_icon);
+            actionsHolder.actionTitle = (TextView) convertView.findViewById(R.id.action_title);
 
-    @Override
-    public void onBindViewHolder(ActionsHolder holder, int position) {
+            convertView.setTag(actionsHolder);
+        } else {
+            actionsHolder = (ActionsHolder) convertView.getTag();
+        }
+
         ActionModel model = mActionsList.get(position);
-        holder.actionIcon.setImageResource(model.getActionIcon());
-        holder.actionTitle.setText(model.getActionTitle());
+        if (model != null) {
+            actionsHolder.actionIcon.setImageResource(model.getActionIcon());
+            actionsHolder.actionTitle.setText(model.getActionTitle());
+        }
+
+        return convertView;
     }
 
     @Override
-    public int getItemCount() {
+    public int getCount() {
         return mActionsList.size();
     }
 
-    public class ActionsHolder extends RecyclerView.ViewHolder {
-
+    public class ActionsHolder{
         public ImageView actionIcon;
         public TextView actionTitle;
-
-        public ActionsHolder(View itemView) {
-            super(itemView);
-            actionIcon = (ImageView) itemView.findViewById(R.id.action_icon);
-            actionTitle = (TextView) itemView.findViewById(R.id.action_title);
-        }
     }
 }

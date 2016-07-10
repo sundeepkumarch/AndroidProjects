@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
         android:allowBackup="true"
@@ -23,6 +24,7 @@
 
         <activity android:name=".gesture.GestureSaveActivity" />
         <activity android:name=".gesture.ActionsListActivity"></activity>
+        <activity android:name=".gesture.AppsListActivity"></activity>
     </application>
 
 </manifest>
