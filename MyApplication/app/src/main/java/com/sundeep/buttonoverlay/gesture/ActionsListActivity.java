@@ -4,7 +4,9 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
@@ -66,6 +68,17 @@ public class ActionsListActivity extends AppCompatActivity {
                 break;
             case "LAUNCH_APP":
                 Log.d(TAG,"In LAUNCH_APP case:");
+                
+                PackageManager pm = getPackageManager();
+                List<ApplicationInfo> applications = pm.getInstalledApplications(PackageManager.GET_META_DATA | PackageManager.GET_SHARED_LIBRARY_FILES);
+                for (ApplicationInfo appInfo : applications) {
+                    if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 1) {
+                        AppListItem app = new AppListItem();
+                        app.setIcon(pm.getApplicationIcon(appInfo)); //Icon
+                        app.setPname(appInfo.packageName); //Package name
+                        app.setAppname(String.valueOf(pm.getApplicationLabel(appInfo))); //Package label(app name)
+                    }
+                }
                 List<PackageInfo> packs = getPackageManager().getInstalledPackages(0);
                 ArrayList<AppListItem> appsList = new ArrayList<>();
                 for(int i=0;i<packs.size();i++) {

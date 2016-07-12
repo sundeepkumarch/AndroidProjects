@@ -88,7 +88,7 @@ public class GestureSaveActivity extends AppCompatActivity {
                 //Phone Call Intent
                 GestureIntentData data = new GestureIntentData();
                 data.id = mGesturename;
-                data.intentAction = "Intent.ACTION_CALL";
+                data.intentAction = Intent.ACTION_CALL;
                 data.intentFlag = Intent.FLAG_ACTIVITY_NEW_TASK;
                 data.intentURI = "tel:"+intent_action_value.replaceAll("\\s+","");
                 Log.d("GestureSaveActivity","URI:"+data.intentURI);

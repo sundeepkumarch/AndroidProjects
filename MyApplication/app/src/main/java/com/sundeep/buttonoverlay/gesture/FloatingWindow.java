@@ -1,9 +1,7 @@
 package com.sundeep.buttonoverlay.gesture;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.gesture.Gesture;
 import android.gesture.GestureLibraries;
 import android.gesture.GestureLibrary;
@@ -37,6 +35,8 @@ public class FloatingWindow extends Service {
     private LinearLayout ll;
     private ImageView launchIcon;
     private boolean llVisible = false;
+
+    WindowManager.LayoutParams llParams;
 
     private GestureDetector gestureDetector;
     private GestureLibrary gLib;
@@ -73,7 +73,7 @@ public class FloatingWindow extends Service {
         ll.setVisibility(llVisible ? View.VISIBLE : View.INVISIBLE);
         ll.setBackgroundResource(R.drawable.custom_rectangle);
 
-        final WindowManager.LayoutParams llParams = new WindowManager.LayoutParams(
+        llParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
@@ -109,7 +109,6 @@ public class FloatingWindow extends Service {
 
                 if (gestureDetector.onTouchEvent(event)) {
                     // Single Tap
-                    Toast.makeText(FloatingWindow.this, "Overlay button Clicked", Toast.LENGTH_SHORT).show();
 //                    swipeView.clear();
                     llVisible = !llVisible;
                     ll.setVisibility(llVisible ? View.VISIBLE : View.INVISIBLE);
@@ -172,42 +171,53 @@ public class FloatingWindow extends Service {
                 // checking prediction
                 if (prediction.score > 1.0) {
                     // and action
-                    Toast.makeText(FloatingWindow.this, prediction.name+":"+Utility.gestureMap.size(), Toast.LENGTH_SHORT).show();
-                    Intent intent = new Utility(getApplicationContext()).getGesture(prediction.name);
+                    ll.setVisibility(View.INVISIBLE);
+                    wm.updateViewLayout(ll, llParams);
 
-                    if (intent != null) {
-                        Toast.makeText(FloatingWindow.this, "Starting intent:"+prediction.name, Toast.LENGTH_SHORT).show();
-                        Log.d("FloatingWindow","Action:"+intent.getAction());
-                        Log.d("FloatingWindow","Data_URI:"+intent.getData());
-                        Log.d("FloatingWindow","Flag:"+intent.getFlags());
+                    Toast.makeText(FloatingWindow.this, prediction.name + ":" + Utility.gestureMap.size(), Toast.LENGTH_SHORT).show();
+                    GestureIntentData intentData = new Utility(getApplicationContext()).getGesture(prediction.name);
 
-                        /*
-                        Intent callIntent = new Intent(Intent.ACTION_SEND);
-                        callIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        callIntent.setData(Uri.parse("content://com.android.contacts/data/"));
-                        callIntent.setType("text/plain");
-                        callIntent.setPackage("com.whatsapp");
-                        callIntent.putExtra(Intent.EXTRA_SUBJECT, "Subject");
-                        callIntent.putExtra(Intent.EXTRA_TEXT, "I'm the body.");
+                    Intent intent = new Intent();
+                    Toast.makeText(FloatingWindow.this, "Starting intent:" + prediction.name, Toast.LENGTH_SHORT).show();
 
-                        TelephonyManager tm = (TelephonyManager)getSystemService(TELEPHONY_SERVICE);
-                        if(tm != null && tm.getSimState()==TelephonyManager.SIM_STATE_READY){
-                            startActivity(callIntent);
-                        }else{
-                            Log.d("FloatingWindow","No telephony available");
-                        }
-                        */
-                        Intent sendIntent = new Intent();
+                    if (intentData.intentAction.length() != 0) {
+                        intent.setAction(intentData.intentAction);
+                    }
+                    if (intentData.intentFlag != -1) {
+                        intent.setFlags(intentData.intentFlag);
+                    }
+                    if (intentData.intentURI.length() != 0) {
+                        intent.setData(Uri.parse(intentData.intentURI));
+                    }
+
+                    Log.d("FloatingWindow", "Action:" + intent.getAction());
+                    Log.d("FloatingWindow", "Data_URI:" + intent.getData());
+                    Log.d("FloatingWindow", "Flag:" + intent.getFlags());
+
+                        /*Intent whatsappIntent = new Intent(Intent.ACTION_SEND);
+                        whatsappIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        whatsappIntent.setData(Uri.parse("content://com.android.contacts/data/"));
+                        whatsappIntent.setType("text/plain");
+                        whatsappIntent.setPackage("com.whatsapp");
+                        whatsappIntent.putExtra(Intent.EXTRA_SUBJECT, "Subject");
+                        whatsappIntent.putExtra(Intent.EXTRA_TEXT, "I'm the body.");*/
+
+                    if (intent.resolveActivity(getApplicationContext().getPackageManager()) != null) {
+                        startActivity(intent);
+                    }else{
+                        Log.d(TAG,"No Activity found to handle Intent!!!");
+                    }
+
+                        /*Intent sendIntent = new Intent();
                         sendIntent.setAction(Intent.ACTION_SENDTO);
                         sendIntent.putExtra(Intent.EXTRA_TEXT, "This is my text to send.");
                         sendIntent.setType("text/plain");
                         sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         sendIntent.setPackage("com.whatsapp");
                         sendIntent.setData(Uri.parse("smsto:+919686643995"));
-                        startActivity(sendIntent);
+                        startActivity(sendIntent);*/
 
 
-                    }
                 }
             }
         }

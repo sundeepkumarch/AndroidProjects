@@ -62,14 +62,22 @@ public class Utility {
         editor.commit();
     }
 
-    public Intent getGesture(String id){
+    public GestureIntentData getGesture(String id){
         Intent intent = new Intent();
+        GestureIntentData intentData = new GestureIntentData();
         String action = sharedPrefs.getString(getFieldKey(id,KEY_INTENTACTION),"");
         int flag = sharedPrefs.getInt(getFieldKey(id,KEY_INTENTFLAG),-1);
         String uri = sharedPrefs.getString(getFieldKey(id,KEY_INTENTURI),"");
+
+        intentData.id = id;
+        intentData.intentAction = action;
+        intentData.intentFlag = flag;
+        intentData.intentURI = uri;
+
         if(action.length() != 0) {
             Log.d(TAG,"ACTION:"+action);
             intent.setAction(action);
+
         }else{
             return null;
         }
@@ -85,7 +93,7 @@ public class Utility {
         }else{
             return null;
         }
-        return intent;
+        return intentData;
     }
     public static void addGesture(String gestureName, Intent gesture){
         gestureMap.put(gestureName,gesture);
