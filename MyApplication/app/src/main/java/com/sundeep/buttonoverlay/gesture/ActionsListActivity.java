@@ -3,14 +3,12 @@ package com.sundeep.buttonoverlay.gesture;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -20,6 +18,7 @@ import android.widget.Toast;
 import com.sundeep.buttonoverlay.R;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ActionsListActivity extends AppCompatActivity {
@@ -43,7 +42,7 @@ public class ActionsListActivity extends AppCompatActivity {
 
         listData = Utility.getActionsData();
 
-        adapter = new ActionsListAdapter(this,0,listData);
+        adapter = new ActionsListAdapter(this, 0, listData);
         actionsListView.setAdapter(adapter);
 
         actionsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -57,8 +56,8 @@ public class ActionsListActivity extends AppCompatActivity {
         registerForContextMenu(actionsListView);
     }
 
-    private void startSelectedActivity(ActionModel action){
-        switch(action.getActionType()){
+    private void startSelectedActivity(ActionModel action) {
+        switch (action.getActionType()) {
             case "CALL":
                 Intent intent = new Intent(Intent.ACTION_PICK);
                 intent.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
@@ -67,20 +66,23 @@ public class ActionsListActivity extends AppCompatActivity {
                 }
                 break;
             case "LAUNCH_APP":
-                Log.d(TAG,"In LAUNCH_APP case:");
-                
+                Log.d(TAG, "In LAUNCH_APP case:");
+
                 PackageManager pm = getPackageManager();
+                ArrayList<AppListItem> appsList = new ArrayList<>();
                 List<ApplicationInfo> applications = pm.getInstalledApplications(PackageManager.GET_META_DATA | PackageManager.GET_SHARED_LIBRARY_FILES);
                 for (ApplicationInfo appInfo : applications) {
-                    if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 1) {
+                    if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 1) {
                         AppListItem app = new AppListItem();
-                        app.setIcon(pm.getApplicationIcon(appInfo)); //Icon
-                        app.setPname(appInfo.packageName); //Package name
-                        app.setAppname(String.valueOf(pm.getApplicationLabel(appInfo))); //Package label(app name)
+                        app.setIcon(pm.getApplicationIcon(appInfo));
+                        app.setPname(appInfo.packageName);
+                        Log.d(TAG, appInfo.packageName);
+                        app.setAppname(String.valueOf(pm.getApplicationLabel(appInfo)));
+                        appsList.add(app);
                     }
                 }
-                List<PackageInfo> packs = getPackageManager().getInstalledPackages(0);
-                ArrayList<AppListItem> appsList = new ArrayList<>();
+
+                /*List<PackageInfo> packs = getPackageManager().getInstalledPackages(0);
                 for(int i=0;i<packs.size();i++) {
                     PackageInfo p = packs.get(i);
                     if((p.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
@@ -93,15 +95,19 @@ public class ActionsListActivity extends AppCompatActivity {
                         app.setIcon(p.applicationInfo.loadIcon(getPackageManager()));
                         appsList.add(app);
                     }
-                }
+                }*/
                 Intent launchIntent = new Intent(ActionsListActivity.this, AppsListActivity.class);
 //                launchIntent.putParcelableArrayListExtra("dataList",appsList);
-                launchIntent.putExtra("dataList",appsList);
-                Log.d(TAG,"Launching apps list size:"+appsList.size());
+                launchIntent.putExtra("dataList", appsList);
+                Log.d(TAG, "Launching apps list size:" + appsList.size());
                 startActivityForResult(launchIntent, REQUEST_LAUNCH_APP);
                 break;
             case "WHATSAPP":
-                ContentResolver cr = getApplicationContext().getContentResolver();
+
+                Intent pickIntent = new Intent(Intent.ACTION_PICK);
+                pickIntent.setPackage("com.whatsapp");
+                startActivityForResult(pickIntent, REQUEST_WHATSAPP_CONTACT);
+                /*ContentResolver cr = getApplicationContext().getContentResolver();
 
                 //RowContacts for filter Account Types
                 Cursor contactCursor = cr.query(
@@ -141,11 +147,7 @@ public class ActionsListActivity extends AppCompatActivity {
                                         whatsAppContactCursor.close();
 
                                         //Add Number to ArrayList
-                                        myWhatsappContacts.add(number);
-
-                                        Log.d(TAG, " WhatsApp contact id  :  " + id);
-                                        Log.d(TAG, " WhatsApp contact name :  " + name);
-                                        Log.d(TAG, " WhatsApp contact number :  " + number);
+                                        myWhatsappContacts.add(name + "~" + number);
                                     }
                                 }
                             } while (contactCursor.moveToNext());
@@ -153,17 +155,20 @@ public class ActionsListActivity extends AppCompatActivity {
                         }
                     }
                 }
-
-                Log.d(TAG, " WhatsApp contact size :  " + myWhatsappContacts.size());
-
+                Collections.sort(myWhatsappContacts);
+                for (String a : myWhatsappContacts) {
+                    Log.d(TAG, "---------------------------------------->" + a);
+                }
+                Log.d(TAG, " WhatsApp contact size :  " + myWhatsappContacts.size());*/
+                break;
         }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch(requestCode){
+        switch (requestCode) {
             case REQUEST_SELECT_CONTACT:
-                if(resultCode == RESULT_OK){
+                if (resultCode == RESULT_OK) {
                     Uri contactUri = data.getData();
                     String[] projection = {ContactsContract.CommonDataKinds.Phone.NUMBER};
                     Cursor cursor = getContentResolver()
@@ -171,18 +176,26 @@ public class ActionsListActivity extends AppCompatActivity {
                     cursor.moveToFirst();
                     int column = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
                     String number = cursor.getString(column);
-                    Toast.makeText(getApplicationContext(), "Calling "+number, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Calling " + number, Toast.LENGTH_LONG).show();
 
                     Intent returnIntent = new Intent();
                     returnIntent.putExtra("action_key", Utility.ACTION.CALL_NUMBER);
-                    returnIntent.putExtra("action_value",number);
-                    setResult(RESULT_OK,returnIntent);
+                    returnIntent.putExtra("action_value", number);
+                    setResult(RESULT_OK, returnIntent);
                     finish();
                 }
                 break;
-            case REQUEST_LAUNCH_APP:
-                if(resultCode == RESULT_OK){
-
+            case REQUEST_WHATSAPP_CONTACT:
+                if (resultCode == RESULT_OK) {
+                    if(data.hasExtra("contact")){
+                        String address = data.getStringExtra("contact");
+                        Log.d(TAG, "The selected Whatsapp address is: "+address);
+                        Intent returnIntent = new Intent();
+                        returnIntent.putExtra("action_key", Utility.ACTION.OPEN_WHATSAPP_CONTACT);
+                        returnIntent.putExtra("action_value", address.split("@")[0]);
+                        setResult(RESULT_OK, returnIntent);
+                        finish();
+                    }
                 }
 
         }

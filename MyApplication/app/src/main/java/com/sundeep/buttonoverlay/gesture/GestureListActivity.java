@@ -90,7 +90,7 @@ public class GestureListActivity extends AppCompatActivity {
 
     public void populateMenu(View view) {
         RelativeLayout vwParentRow = (RelativeLayout) view.getParent().getParent();
-        TextView tv = (TextView) vwParentRow.findViewById(R.id.gesture_name_ref);
+        TextView tv = (TextView) vwParentRow.findViewById(R.id.gesture_name);
         mCurrentGestureName = tv.getText().toString();
         PopupMenu popup = new PopupMenu(this, view);
         popup.getMenuInflater().inflate(R.menu.gesture_item_options, popup.getMenu());
@@ -104,6 +104,7 @@ public class GestureListActivity extends AppCompatActivity {
 
 
     public void deleteButtonClick(MenuItem item) {
+        Log.d(TAG,"Deleting gesture:"+mCurrentGestureName);
         gLib.removeEntry(mCurrentGestureName);
         gLib.save();
         mCurrentGestureName = "";

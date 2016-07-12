@@ -84,6 +84,7 @@ public class GestureSaveActivity extends AppCompatActivity {
     public void saveIntent(){
 
         switch (intent_action_key){
+
             case CALL_NUMBER:
                 //Phone Call Intent
                 GestureIntentData data = new GestureIntentData();
@@ -94,7 +95,16 @@ public class GestureSaveActivity extends AppCompatActivity {
                 Log.d("GestureSaveActivity","URI:"+data.intentURI);
                 new Utility(getApplicationContext()).saveGesture(data);
                 break;
-            case SEND_MSG:
+            case OPEN_WHATSAPP_CONTACT:
+                GestureIntentData contactData = new GestureIntentData();
+                contactData.id = mGesturename;
+                contactData.intentAction = Intent.ACTION_SENDTO;
+                contactData.intentFlag = Intent.FLAG_ACTIVITY_NEW_TASK;
+                contactData.intentURI = "smsto:"+intent_action_value;
+                contactData.intentType = "text/plain";
+                contactData.intentPackage = "com.whatsapp";
+                new Utility(getApplicationContext()).saveGesture(contactData);
+                break;
 
         }
 
@@ -118,6 +128,10 @@ public class GestureSaveActivity extends AppCompatActivity {
             switch (intent_action_key){
                 case CALL_NUMBER:
                     gestureActionView.setText("Calling "+intent_action_value);
+                    break;
+                case OPEN_WHATSAPP_CONTACT:
+                    gestureActionView.setText("Send Whatsapp to "+intent_action_value);
+                    break;
             }
 
         }

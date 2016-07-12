@@ -11,7 +11,6 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.os.IBinder;
-import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -180,21 +179,33 @@ public class FloatingWindow extends Service {
                     Intent intent = new Intent();
                     Toast.makeText(FloatingWindow.this, "Starting intent:" + prediction.name, Toast.LENGTH_SHORT).show();
 
-                    if (intentData.intentAction.length() != 0) {
+                    Log.d("FloatingWindow", "DataURI:" + intentData.intentURI);
+                    Log.d("FloatingWindow", "DataType:" + intentData.intentType);
+                    Log.d("FloatingWindow", "DataPackage:" + intentData.intentPackage);
+
+                    if (intentData.intentAction != null) {
                         intent.setAction(intentData.intentAction);
                     }
                     if (intentData.intentFlag != -1) {
                         intent.setFlags(intentData.intentFlag);
                     }
-                    if (intentData.intentURI.length() != 0) {
+                    if (intentData.intentURI != null) {
                         intent.setData(Uri.parse(intentData.intentURI));
+                    }
+                    if (intentData.intentType != null) {
+                        intent.setType(intentData.intentType);
+                    }
+                    if (intentData.intentPackage != null) {
+                        intent.setPackage(intentData.intentPackage);
                     }
 
                     Log.d("FloatingWindow", "Action:" + intent.getAction());
                     Log.d("FloatingWindow", "Data_URI:" + intent.getData());
                     Log.d("FloatingWindow", "Flag:" + intent.getFlags());
+                    Log.d("FloatingWindow", "Type:" + intent.getType());
+                    Log.d("FloatingWindow", "Package:" + intent.getPackage());
 
-                        /*Intent whatsappIntent = new Intent(Intent.ACTION_SEND);
+                        /*
                         whatsappIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         whatsappIntent.setData(Uri.parse("content://com.android.contacts/data/"));
                         whatsappIntent.setType("text/plain");
@@ -204,20 +215,9 @@ public class FloatingWindow extends Service {
 
                     if (intent.resolveActivity(getApplicationContext().getPackageManager()) != null) {
                         startActivity(intent);
-                    }else{
-                        Log.d(TAG,"No Activity found to handle Intent!!!");
+                    } else {
+                        Log.d(TAG, "No Activity found to handle Intent!!!");
                     }
-
-                        /*Intent sendIntent = new Intent();
-                        sendIntent.setAction(Intent.ACTION_SENDTO);
-                        sendIntent.putExtra(Intent.EXTRA_TEXT, "This is my text to send.");
-                        sendIntent.setType("text/plain");
-                        sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        sendIntent.setPackage("com.whatsapp");
-                        sendIntent.setData(Uri.parse("smsto:+919686643995"));
-                        startActivity(sendIntent);*/
-
-
                 }
             }
         }

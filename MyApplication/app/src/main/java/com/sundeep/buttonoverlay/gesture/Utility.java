@@ -3,7 +3,6 @@ package com.sundeep.buttonoverlay.gesture;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.util.Log;
 
 import com.sundeep.buttonoverlay.R;
@@ -25,14 +24,16 @@ public class Utility {
     private static final String KEY_INTENTACTION = "com.sundeep.appname.INTENT_ACTION";
     private static final String KEY_INTENTFLAG = "com.our.package.INTENT_FLAG";
     private static final String KEY_INTENTURI = "com.our.package.INTENT_URI";
+    private static final String KEY_INTENTTYPE = "com.our.package.INTENT_TYPE";
+    private static final String KEY_INTENTPACKAGE = "com.our.package.INTENT_PACKAGE";
 
     public enum ACTION {
-        CALL_NUMBER,LAUNCH_APP,OPEN_URL,PLAY_MUSIC,SEND_MSG,OPEN_SETTINGS
+        CALL_NUMBER, LAUNCH_APP, OPEN_URL, PLAY_MUSIC, OPEN_WHATSAPP_CONTACT, OPEN_SETTINGS
     }
 
     public Utility(Context context) {
-        if(sharedPrefs == null){
-            sharedPrefs = context.getSharedPreferences(PREFS_NAME,Context.MODE_PRIVATE);
+        if (sharedPrefs == null) {
+            sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         }
     }
 
@@ -49,53 +50,47 @@ public class Utility {
         return listData;
     }
 
-    private String getFieldKey(String intentId,String intentField){
+    private String getFieldKey(String intentId, String intentField) {
         return KEY_PREFIX + intentId + "_" + intentField;
     }
 
-    public void saveGesture(GestureIntentData data){
-       editor = sharedPrefs.edit();
+    public void saveGesture(GestureIntentData data) {
+        editor = sharedPrefs.edit();
         String id = data.id;
-        editor.putString(getFieldKey(id,KEY_INTENTACTION),data.intentAction);
-        editor.putInt(getFieldKey(id,KEY_INTENTFLAG),data.intentFlag);
-        editor.putString(getFieldKey(id,KEY_INTENTURI),data.intentURI);
+        editor.putString(getFieldKey(id, KEY_INTENTACTION), data.intentAction);
+        editor.putInt(getFieldKey(id, KEY_INTENTFLAG), data.intentFlag);
+        editor.putString(getFieldKey(id, KEY_INTENTURI), data.intentURI);
+        editor.putString(getFieldKey(id, KEY_INTENTTYPE), data.intentType);
+        editor.putString(getFieldKey(id, KEY_INTENTPACKAGE), data.intentPackage);
         editor.commit();
     }
 
-    public GestureIntentData getGesture(String id){
+    public GestureIntentData getGesture(String id) {
         Intent intent = new Intent();
         GestureIntentData intentData = new GestureIntentData();
-        String action = sharedPrefs.getString(getFieldKey(id,KEY_INTENTACTION),"");
-        int flag = sharedPrefs.getInt(getFieldKey(id,KEY_INTENTFLAG),-1);
-        String uri = sharedPrefs.getString(getFieldKey(id,KEY_INTENTURI),"");
+        String action = sharedPrefs.getString(getFieldKey(id, KEY_INTENTACTION), "");
+        int flag = sharedPrefs.getInt(getFieldKey(id, KEY_INTENTFLAG), -1);
+        String uri = sharedPrefs.getString(getFieldKey(id, KEY_INTENTURI), "");
+        String type = sharedPrefs.getString(getFieldKey(id, KEY_INTENTTYPE), "");
+        String packagename = sharedPrefs.getString(getFieldKey(id, KEY_INTENTPACKAGE), "");
 
         intentData.id = id;
         intentData.intentAction = action;
         intentData.intentFlag = flag;
         intentData.intentURI = uri;
+        intentData.intentType = type;
+        intentData.intentPackage = packagename;
 
-        if(action.length() != 0) {
-            Log.d(TAG,"ACTION:"+action);
-            intent.setAction(action);
+        Log.d(TAG, "ACTION:" + action);
+        Log.d(TAG, "FLAG:" + flag);
+        Log.d(TAG, "URI:" + uri);
+        Log.d(TAG, "TYPE:" + type);
+        Log.d(TAG, "PACKAGE:" + packagename);
 
-        }else{
-            return null;
-        }
-        if(flag != -1) {
-            Log.d(TAG,"FLAG:"+flag);
-            intent.setFlags(flag);
-        }else{
-            return null;
-        }
-        if(uri.length() != 0) {
-            Log.d(TAG,"URI:"+uri);
-            intent.setData(Uri.parse(uri));
-        }else{
-            return null;
-        }
         return intentData;
     }
-    public static void addGesture(String gestureName, Intent gesture){
-        gestureMap.put(gestureName,gesture);
+
+    public static void addGesture(String gestureName, Intent gesture) {
+        gestureMap.put(gestureName, gesture);
     }
 }
