@@ -1,13 +1,17 @@
 package com.sundeep.buttonoverlay.gesture;
 
 import android.content.ContentResolver;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -67,20 +71,9 @@ public class ActionsListActivity extends AppCompatActivity {
                 break;
             case "LAUNCH_APP":
                 Log.d(TAG, "In LAUNCH_APP case:");
+                showAppsListPopup();
 
-                PackageManager pm = getPackageManager();
-                ArrayList<AppListItem> appsList = new ArrayList<>();
-                List<ApplicationInfo> applications = pm.getInstalledApplications(PackageManager.GET_META_DATA | PackageManager.GET_SHARED_LIBRARY_FILES);
-                for (ApplicationInfo appInfo : applications) {
-                    if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 1) {
-                        AppListItem app = new AppListItem();
-                        app.setIcon(pm.getApplicationIcon(appInfo));
-                        app.setPname(appInfo.packageName);
-                        Log.d(TAG, appInfo.packageName);
-                        app.setAppname(String.valueOf(pm.getApplicationLabel(appInfo)));
-                        appsList.add(app);
-                    }
-                }
+
 
                 /*List<PackageInfo> packs = getPackageManager().getInstalledPackages(0);
                 for(int i=0;i<packs.size();i++) {
@@ -96,11 +89,16 @@ public class ActionsListActivity extends AppCompatActivity {
                         appsList.add(app);
                     }
                 }*/
-                Intent launchIntent = new Intent(ActionsListActivity.this, AppsListActivity.class);
-//                launchIntent.putParcelableArrayListExtra("dataList",appsList);
-                launchIntent.putExtra("dataList", appsList);
-                Log.d(TAG, "Launching apps list size:" + appsList.size());
-                startActivityForResult(launchIntent, REQUEST_LAUNCH_APP);
+
+                break;
+            case "PLAY_MUSIC":
+                AudioManager mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                if(mAudioManager.isMusicActive()) {
+                    Intent i = new Intent("com.android.music.musicservicecommand");
+                    i.putExtra("command" , "togglepause" );
+                    sendBroadcast(i);
+                    
+                }
                 break;
             case "WHATSAPP":
 
@@ -161,7 +159,55 @@ public class ActionsListActivity extends AppCompatActivity {
                 }
                 Log.d(TAG, " WhatsApp contact size :  " + myWhatsappContacts.size());*/
                 break;
+            case "OPEN_SETTINGS":
+                //startActivity(new Intent(android.provider.Settings.ACTION_DATA_ROAMING_SETTINGS));
+                //https://developer.android.com/reference/android/provider/Settings.html
+                break;
+
         }
+    }
+
+    private void showAppsListPopup(){
+        AlertDialog.Builder appsListDialog = new AlertDialog.Builder(ActionsListActivity.this);
+        appsListDialog.setIcon(R.mipmap.ic_launcher);
+        appsListDialog.setTitle("Choose an App");
+
+        PackageManager pm = getPackageManager();
+        final ArrayList<AppListItem> appsList = new ArrayList<>();
+        List<ApplicationInfo> applications = pm.getInstalledApplications(PackageManager.GET_META_DATA | PackageManager.GET_SHARED_LIBRARY_FILES);
+        for (ApplicationInfo appInfo : applications) {
+            if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 1) {
+                AppListItem app = new AppListItem();
+                app.setIcon(pm.getApplicationIcon(appInfo));
+                app.setPname(appInfo.packageName);
+                Log.d(TAG, appInfo.packageName);
+                app.setAppname(String.valueOf(pm.getApplicationLabel(appInfo)));
+                appsList.add(app);
+            }
+        }
+
+        final AppsListAdapter adapter  = new AppsListAdapter(this, 0 , appsList);
+
+        appsListDialog.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        appsListDialog.setAdapter(adapter, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                AppListItem app = appsList.get(which);
+                Log.d(TAG,"Selected App:"+app.getAppname()+"~"+app.getPname());
+                Intent returnIntent = new Intent();
+                returnIntent.putExtra("action_key", Utility.ACTION.LAUNCH_APP);
+                returnIntent.putExtra("action_value", app.getAppname()+"~"+app.getPname());
+                setResult(RESULT_OK, returnIntent);
+                finish();
+            }
+        });
+        appsListDialog.show();
     }
 
     @Override

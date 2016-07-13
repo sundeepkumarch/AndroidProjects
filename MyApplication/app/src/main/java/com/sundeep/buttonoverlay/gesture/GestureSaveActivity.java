@@ -105,7 +105,13 @@ public class GestureSaveActivity extends AppCompatActivity {
                 contactData.intentPackage = "com.whatsapp";
                 new Utility(getApplicationContext()).saveGesture(contactData);
                 break;
-
+            case LAUNCH_APP:
+                GestureIntentData launchData = new GestureIntentData();
+                launchData.id = mGesturename;
+                launchData.intentFlag = Intent.FLAG_ACTIVITY_NEW_TASK;
+                launchData.intentPackage = intent_action_value;
+                new Utility(getApplicationContext()).saveGesture(launchData);
+                break;
         }
 
     }
@@ -125,14 +131,18 @@ public class GestureSaveActivity extends AppCompatActivity {
         if (requestCode == ACTION_RESULT_CODE && resultCode == RESULT_OK) {
             intent_action_value = data.getStringExtra("action_value");
             intent_action_key = (Utility.ACTION)data.getExtras().get("action_key");
+            String actionText = "";
             switch (intent_action_key){
                 case CALL_NUMBER:
-                    gestureActionView.setText("Calling "+intent_action_value);
+                    actionText = "Calling "+intent_action_value;
                     break;
                 case OPEN_WHATSAPP_CONTACT:
-                    gestureActionView.setText("Send Whatsapp to "+intent_action_value);
+                    actionText = "Send Whatsapp to "+intent_action_value;
                     break;
+                case LAUNCH_APP:
+                    actionText = "Open "+intent_action_value.split("~")[0]+" app";
             }
+            gestureActionView.setText(actionText);
 
         }
     }
